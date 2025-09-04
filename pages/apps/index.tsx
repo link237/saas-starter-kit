@@ -1,7 +1,12 @@
 import type { GetServerSideProps, GetServerSidePropsContext, InferGetServerSidePropsType } from 'next';
 import Link from 'next/link';
 import { useTranslation } from 'next-i18next';
-// import { getServerSession } from 'next-auth';
+/// removed duplicate import of useTranslation
+
+import { getServerSession } from 'next-auth/next';
+import { getAuthOptions } from '@/lib/nextAuth';
+import { userAppsMap } from '@/lib/userApps';
+
 // import { authOptions } from '../api/auth/[...nextauth]';
 // import { prisma } from '@/lib/prisma';
 
@@ -25,6 +30,11 @@ export const getServerSideProps: GetServerSideProps<{ apps: AppTile[] }> = async
 ) => {
   // TODO: Resolve the team ID from session if you have multi-tenant logic
   // const session = await getServerSession(ctx.req, ctx.res, authOptions);
+  const authOptions = getAuthOptions(ctx.req, ctx.res);
+  const session = await getServerSession(ctx.req, ctx.res, authOptions);
+  const email = session?.user?.email ?? '';
+  const allowedAppIds = userAppsMap[email] ?? [];
+
   // const teamId = session?.teamId;
 
   // TODO: Fetch the list of apps enabled for the team from your database or API
@@ -41,6 +51,11 @@ export const getServerSideProps: GetServerSideProps<{ apps: AppTile[] }> = async
       description: '上传合同自动生成摘要并标出风险条款。',
       url: '/tools/contract-review'
     },
+//    //    const authOptions = getAuthOptions(ctx.req, ctx.res);
+//   c// onst session = await getServerSession(ctx.req, ctx.res, authOptions);
+//   c// onst email = session?.user?.email ?? '';
+//   c// onst allowedAppIds = userAppsMap[email] ?? [];
+
     {
       id: 'video-generator',
       name: '视频生成',
@@ -49,9 +64,11 @@ export const getServerSideProps: GetServerSideProps<{ apps: AppTile[] }> = async
     }
   ];
 
+  const filteredApps = apps.filter(app => allowedAppIds.includes(app.id));
+
   return {
     props: {
-      apps
+    : apps: filteredApps
     }
   };
 };
