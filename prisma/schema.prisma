@@ -218,3 +218,17 @@ model jackson_ttl {
   @@index([expiresAt], map: "_jackson_ttl_expires_at")
   @@ignore
 }
+
+model UserApp {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  appId     String
+  canView   Boolean  @default(true)
+  canUse    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, appId])
+}
+
