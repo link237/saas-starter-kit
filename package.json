@@ -1,6 +1,7 @@
 {
-  "name": "saas-starter-kit",
+  "name": "yunbu-info",
   "version": "1.6.0",
+  "description": "云步信息多租户聚合门户",
   "private": true,
   "prisma": {
     "seed": "ts-node ./prisma/seed.ts"
