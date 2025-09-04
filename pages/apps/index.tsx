@@ -7,7 +7,6 @@ import { getServerSession } from 'next-auth/next';
 import { getAuthOptions } from '@/lib/nextAuth';
 import { prisma } from '@/lib/prisma';
 import { getUserAppPermissions } from '@/models/userApp';
-import { userAppsMap } from '@/lib/userApps';
 
 
 // Define a type for application tiles shown on the marketplace
