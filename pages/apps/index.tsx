@@ -5,10 +5,10 @@ import { useTranslation } from 'next-i18next';
 
 import { getServerSession } from 'next-auth/next';
 import { getAuthOptions } from '@/lib/nextAuth';
+import { prisma } from '@/lib/prisma';
+import { getUserAppPermissions } from '@/models/userApp';
 import { userAppsMap } from '@/lib/userApps';
 
-// import { authOptions } from '../api/auth/[...nextauth]';
-// import { prisma } from '@/lib/prisma';
 
 // Define a type for application tiles shown on the marketplace
 // Each tile includes an id, name, description, and URL for navigation
@@ -28,50 +28,36 @@ type AppTile = {
 export const getServerSideProps: GetServerSideProps<{ apps: AppTile[] }> = async (
   ctx: GetServerSidePropsContext
 ) => {
-  // TODO: Resolve the team ID from session if you have multi-tenant logic
-  // const session = await getServerSession(ctx.req, ctx.res, authOptions);
-  const authOptions = getAuthOptions(ctx.req, ctx.res);
-  const session = await getServerSession(ctx.req, ctx.res, authOptions);
-  const email = session?.user?.email ?? '';
-  const allowedAppIds = userAppsMap[email] ?? [];
+  // 当前用户登录信息
+  const session = await getServerSession(ctx.req, ctx.res, getAuthOptions(ctx.req, ctx.res));
+  const email = session?.user?.email || '';
 
-  // const teamId = session?.teamId;
-
-  // TODO: Fetch the list of apps enabled for the team from your database or API
+  // 定义可用的应用列表（原本的静态 apps）
   const apps: AppTile[] = [
-    {
-      id: 'zip-upload',
-      name: '解压上传',
-      description: '上传 ZIP 压缩包到 OSS 并自动解压，生成可访问链接。',
-      url: '/tools/zip-upload'
-    },
-    {
-      id: 'contract-review',
-      name: '合同审核',
-      description: '上传合同自动生成摘要并标出风险条款。',
-      url: '/tools/contract-review'
-    },
-//    //    const authOptions = getAuthOptions(ctx.req, ctx.res);
-//   c// onst session = await getServerSession(ctx.req, ctx.res, authOptions);
-//   c// onst email = session?.user?.email ?? '';
-//   c// onst allowedAppIds = userAppsMap[email] ?? [];
-
-    {
-      id: 'video-generator',
-      name: '视频生成',
-      description: '输入脚本自动生成短视频，支持字幕合成。',
-      url: '/tools/video-generator'
-    }
+    { id: 'zip-upload', name: '解压上传', description: '上传 ZIP 压缩包到 OSS 并自动解压，生成可访问链接。', url: '/tools/zip-upload' },
+    { id: 'contract-review', name: '合同审核', description: '上传合同自动生成摘要并标出风险条款。', url: '/tools/contract-review' },
+    { id: 'video-generator', name: '视频生成', description: '输入脚本自动生成短视频，支持字幕合成。', url: '/tools/video-generator' }
   ];
 
-  const filteredApps = apps.filter(app => allowedAppIds.includes(app.id));
+  let filteredApps: AppTile[] = [];
+
+  if (email) {
+    // 查找用户获取 userId
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      // 查询数据库中该用户的应用权限
+      const permissions = await getUserAppPermissions(user.id);
+      const allowedAppIds = permissions.map((p) => p.appId);
+      // 根据权限过滤前端显示的应用
+      filteredApps = apps.filter((app) => allowedAppIds.includes(app.id));
+    }
+  }
 
   return {
-    props: {
-    : apps: filteredApps
-    }
+    props: { apps: filteredApps }
   };
 };
+
 
 /**
  * 应用广场页面: 显示当前租户已启用的 AI 应用列表，以磁贴方式呈现。
