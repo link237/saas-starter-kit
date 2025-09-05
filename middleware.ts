@@ -74,6 +74,10 @@ const unAuthenticatedRoutes = [
 ];
 
 export default async function middleware(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith('/_next')) {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
 
   // Bypass routes that don't require authentication
