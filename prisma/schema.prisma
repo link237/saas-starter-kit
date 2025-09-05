@@ -67,6 +67,7 @@ model User {
   accounts    Account[]
   sessions    Session[]
   invitations Invitation[]
+  apps        UserApp[]
 }
 
 model Team {
@@ -231,4 +232,3 @@ model UserApp {
 
   @@unique([userId, appId])
 }
-
